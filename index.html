@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1a1a1f">
+<title>PoE2 Flip</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style>
+:root {
+  --bg: #f4f3f0;
+  --card: #ffffff;
+  --surface: #eceae5;
+  --text: #1a1a1f;
+  --text-2: #6b6a66;
+  --text-3: #9a9892;
+  --border: rgba(0,0,0,0.12);
+  --good-bg: #e1f5ee;
+  --good-text: #0f6e56;
+  --good-strong: #04342c;
+  --bad-bg: #fcebeb;
+  --bad-text: #a32d2d;
+  --bad-strong: #501313;
+  --accent: #1d9e75;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #131316;
+    --card: #1e1e23;
+    --surface: #2a2a30;
+    --text: #f0efec;
+    --text-2: #a3a29c;
+    --text-3: #757470;
+    --border: rgba(255,255,255,0.14);
+    --good-bg: #0a3d30;
+    --good-text: #5dcaa5;
+    --good-strong: #9fe1cb;
+    --bad-bg: #471616;
+    --bad-text: #f09595;
+    --bad-strong: #f7c1c1;
+  }
+}
+* { box-sizing: border-box; margin: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  padding: max(16px, env(safe-area-inset-top)) 12px max(24px, env(safe-area-inset-bottom));
+}
+main { width: 100%; max-width: 400px; }
+.card {
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+.card-wrap {
+  background: var(--card);
+  border: 0.5px solid var(--border);
+  border-radius: 20px;
+  padding: 18px 16px;
+}
+.label {
+  font-size: 13px;
+  color: var(--text-2);
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.label .hint { color: var(--text-3); font-size: 12px; }
+.row { display: flex; align-items: center; gap: 8px; }
+.row span { font-size: 15px; color: var(--text-2); white-space: nowrap; }
+.row span.strong { color: var(--text); }
+input[type=number] {
+  flex: 1;
+  min-width: 64px;
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 17px;
+  text-align: right;
+  color: var(--text);
+  background: var(--card);
+  border: 0.5px solid var(--border);
+  border-radius: 10px;
+  outline: none;
+}
+input[type=number]:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(29,158,117,0.25); }
+.arrow { display: flex; justify-content: center; padding: 6px 0; color: var(--text-3); font-size: 16px; }
+.verdict { border-radius: 14px; padding: 16px; margin-top: 16px; background: var(--good-bg); }
+.verdict .top { display: flex; justify-content: space-between; font-size: 14px; }
+.verdict .big { font-size: 26px; font-weight: 600; margin-top: 6px; }
+.verdict .sub { font-size: 13px; margin-top: 10px; }
+.verdict .cols { display: flex; gap: 10px; margin-top: 10px; }
+.verdict .col { flex: 1; }
+.verdict .col.bordered { border-left: 0.5px solid var(--border); padding-left: 10px; }
+.verdict .col-label { font-size: 11px; }
+.verdict .col-value { font-size: 17px; font-weight: 600; margin-top: 2px; }
+.verdict .col-hint { font-size: 11px; }
+.good .top, .good .sub, .good .col-label, .good .col-hint { color: var(--good-text); }
+.good .big, .good .col-value { color: var(--good-strong); }
+.bad { background: var(--bad-bg); }
+.bad .top, .bad .sub, .bad .col-label, .bad .col-hint { color: var(--bad-text); }
+.bad .big, .bad .col-value { color: var(--bad-strong); }
+</style>
+</head>
+<body>
+<main>
+  <div class="card-wrap">
+
+    <div class="card">
+      <div class="label"><span>div → ex</span></div>
+      <div class="row">
+        <span class="strong">1 div =</span>
+        <input id="div-to-ex-rate" type="number" inputmode="decimal" value="100" step="1">
+        <span>ex</span>
+      </div>
+    </div>
+
+    <div class="arrow">↓</div>
+
+    <div class="card">
+      <div class="label"><span>ex → валюта</span></div>
+      <div class="row">
+        <span class="strong">1 шт валюти =</span>
+        <input id="buy-price-ex" type="number" inputmode="decimal" value="27" step="1">
+        <span>ex</span>
+      </div>
+    </div>
+
+    <div class="arrow">↓</div>
+
+    <div class="card">
+      <div class="label"><span>валюта → div</span><span class="hint" id="sell-value-hint">≈ 30.3 ex/шт</span></div>
+      <div class="row">
+        <input id="sell-qty-pieces" type="number" inputmode="decimal" value="3.3" step="0.1">
+        <span>шт валюти =</span>
+        <input id="sell-price-div" type="number" inputmode="decimal" value="1" step="1">
+        <span>div</span>
+      </div>
+    </div>
+
+    <div class="verdict good" id="verdict">
+      <div class="top"><span id="verdict-label">Вигідно</span><span id="verdict-margin">+25%</span></div>
+      <div class="big" id="profit-per-loop">+25 ex за коло</div>
+      <div class="cols">
+        <div class="col">
+          <div class="col-label">Дів</div>
+          <div class="col-value" id="net-div">0</div>
+        </div>
+        <div class="col bordered">
+          <div class="col-label">Валюта</div>
+          <div class="col-value" id="net-currency">+1 шт</div>
+          <div class="col-hint" id="net-currency-hint">≈ 25 ex</div>
+        </div>
+        <div class="col bordered">
+          <div class="col-label">Екс</div>
+          <div class="col-value" id="net-ex">0</div>
+        </div>
+      </div>
+      <div class="sub" id="loop-summary">вкладено 1 div → куплено 4 шт, продано 3</div>
+    </div>
+
+  </div>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const INPUT_IDS = ['div-to-ex-rate','buy-price-ex','sell-qty-pieces','sell-price-div','invest-div'];
+const STORAGE_KEY = 'poe2flip';
+
+function formatSigned(value, decimals = 1){
+  return (value >= 0 ? '+' : '') + value.toFixed(decimals);
+}
+
+function recalculate(){
+  const divToExRate = parseFloat($('div-to-ex-rate').value) || 0;
+  const buyPriceEx = parseFloat($('buy-price-ex').value) || 0;
+  const sellQtyPieces = parseFloat($('sell-qty-pieces').value) || 0;
+  const sellPriceDiv = parseFloat($('sell-price-div').value) || 0;
+  if(!divToExRate || !buyPriceEx || !sellQtyPieces || !sellPriceDiv) return;
+
+  const sellValueEx = sellPriceDiv / sellQtyPieces * divToExRate;
+  $('sell-value-hint').textContent = '≈ ' + sellValueEx.toFixed(1) + ' ex/шт';
+
+  let investedDiv = Math.max(1, Math.ceil(sellQtyPieces * buyPriceEx / divToExRate));
+  let piecesBought = 0;
+  let lotsSold = 0;
+  for (let i = 0; i < 1000; i++) {
+    piecesBought = Math.floor(investedDiv * divToExRate / buyPriceEx);
+    lotsSold = Math.floor(piecesBought / sellQtyPieces);
+    if (lotsSold >= 1) break;
+    investedDiv++;
+  }
+  const exLeft = investedDiv * divToExRate - piecesBought * buyPriceEx;
+  const piecesSold = lotsSold * sellQtyPieces;
+  const piecesLeft = piecesBought - piecesSold;
+  const receivedDiv = lotsSold * sellPriceDiv;
+  const netDiv = receivedDiv - investedDiv;
+  const profitPerLoopEx = netDiv * divToExRate + piecesLeft * buyPriceEx + exLeft;
+  const marginPercent = profitPerLoopEx / (investedDiv * divToExRate) * 100;
+  const isProfitable = profitPerLoopEx >= 0;
+
+  const num = (value, decimals = 1) => value % 1 ? value.toFixed(decimals) : String(value);
+  $('verdict-margin').textContent = formatSigned(marginPercent) + '%';
+  $('profit-per-loop').textContent = formatSigned(profitPerLoopEx, profitPerLoopEx % 1 ? 1 : 0) + ' ex за коло';
+  $('net-div').textContent = netDiv === 0 ? '0' : formatSigned(netDiv, netDiv % 1 ? 2 : 0);
+  $('net-currency').textContent = piecesLeft === 0 ? '0' : formatSigned(piecesLeft, piecesLeft % 1 ? 1 : 0) + ' шт';
+  $('net-currency-hint').textContent = piecesLeft > 0 ? '≈ ' + (piecesLeft * buyPriceEx).toFixed(0) + ' ex' : '';
+  $('net-ex').textContent = exLeft === 0 ? '0' : formatSigned(exLeft, exLeft % 1 ? 1 : 0);
+  $('loop-summary').textContent = 'вкладено ' + investedDiv + ' div → куплено ' + piecesBought + ' шт, продано ' + num(piecesSold);
+  $('verdict-label').textContent = isProfitable ? 'Вигідно' : 'Збиток';
+  $('verdict').className = 'verdict ' + (isProfitable ? 'good' : 'bad');
+
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(INPUT_IDS.map(id => $(id).value))); } catch(e){}
+}
+
+try {
+  const savedValues = JSON.parse(localStorage.getItem(STORAGE_KEY));
+  if(Array.isArray(savedValues)) INPUT_IDS.forEach((id, i) => { if(savedValues[i]) $(id).value = savedValues[i]; });
+} catch(e){}
+
+INPUT_IDS.forEach(id => $(id).addEventListener('input', recalculate));
+recalculate();
+if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+</script>
+</body>
+</html>
