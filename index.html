@@ -108,6 +108,31 @@ input[type=number]:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rg
 .bad { background: var(--bad-bg); }
 .bad .top, .bad .sub, .bad .col-label, .bad .col-hint { color: var(--bad-text); }
 .bad .big, .bad .col-value { color: var(--bad-strong); }
+.install-banner {
+  display: none;
+  margin-top: 14px;
+  background: var(--surface);
+  border: 0.5px solid var(--border);
+  border-radius: 14px;
+  padding: 12px 14px;
+  align-items: center;
+  gap: 12px;
+}
+.install-banner.visible { display: flex; }
+.install-banner p { flex: 1; font-size: 13px; color: var(--text-2); }
+.install-banner button {
+  font-family: inherit;
+  font-size: 14px;
+  border: none;
+  border-radius: 10px;
+  padding: 9px 16px;
+  cursor: pointer;
+}
+.install-banner .install-btn { background: var(--accent); color: #fff; font-weight: 600; }
+.install-banner .dismiss-btn { background: transparent; color: var(--text-3); padding: 9px 6px; }
+.credits { margin-top: 16px; text-align: center; font-size: 12px; color: var(--text-3); }
+.credits a { color: var(--accent); text-decoration: none; }
+.credits a:hover { text-decoration: underline; }
 </style>
 </head>
 <body>
@@ -118,7 +143,7 @@ input[type=number]:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rg
       <div class="label"><span>div → ex</span></div>
       <div class="row">
         <span class="strong">1 div =</span>
-        <input id="div-to-ex-rate" type="number" inputmode="decimal" value="100" step="1">
+        <input id="div-to-ex-rate" type="number" inputmode="decimal" step="1">
         <span>ex</span>
       </div>
     </div>
@@ -129,7 +154,7 @@ input[type=number]:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rg
       <div class="label"><span>ex → валюта</span></div>
       <div class="row">
         <span class="strong">1 шт валюти =</span>
-        <input id="buy-price-ex" type="number" inputmode="decimal" value="27" step="1">
+        <input id="buy-price-ex" type="number" inputmode="decimal" step="1">
         <span>ex</span>
       </div>
     </div>
@@ -139,39 +164,47 @@ input[type=number]:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rg
     <div class="card">
       <div class="label"><span>валюта → div</span><span class="hint" id="sell-value-hint">≈ 30.3 ex/шт</span></div>
       <div class="row">
-        <input id="sell-qty-pieces" type="number" inputmode="decimal" value="3.3" step="0.1">
+        <input id="sell-qty-pieces" type="number" inputmode="decimal" step="0.1">
         <span>шт валюти =</span>
-        <input id="sell-price-div" type="number" inputmode="decimal" value="1" step="1">
+        <input id="sell-price-div" type="number" inputmode="decimal" step="1">
         <span>div</span>
       </div>
     </div>
 
     <div class="verdict good" id="verdict">
-      <div class="top"><span id="verdict-label">Вигідно</span><span id="verdict-margin">+25%</span></div>
-      <div class="big" id="profit-per-loop">+25 ex за коло</div>
+      <div class="top"><span id="verdict-label">Введи курси</span><span id="verdict-margin"></span></div>
+      <div class="big" id="profit-per-loop">—</div>
       <div class="cols">
         <div class="col">
           <div class="col-label">Дів</div>
-          <div class="col-value" id="net-div">0</div>
+          <div class="col-value" id="net-div">—</div>
         </div>
         <div class="col bordered">
           <div class="col-label">Валюта</div>
-          <div class="col-value" id="net-currency">+1 шт</div>
-          <div class="col-hint" id="net-currency-hint">≈ 25 ex</div>
+          <div class="col-value" id="net-currency">—</div>
+          <div class="col-hint" id="net-currency-hint"></div>
         </div>
         <div class="col bordered">
           <div class="col-label">Екс</div>
-          <div class="col-value" id="net-ex">0</div>
+          <div class="col-value" id="net-ex">—</div>
         </div>
       </div>
-      <div class="sub" id="loop-summary">вкладено 1 div → куплено 4 шт, продано 3</div>
+      <div class="sub" id="loop-summary"></div>
     </div>
 
   </div>
+
+  <div class="install-banner" id="install-banner">
+    <p id="install-text">Встанови як застосунок — швидкий доступ з хоумскріна</p>
+    <button class="install-btn" id="install-btn">Встановити</button>
+    <button class="dismiss-btn" id="install-dismiss" aria-label="Закрити">✕</button>
+  </div>
+
+  <footer class="credits">made with ♥ by <a href="https://github.com/Kp0c" target="_blank" rel="noopener">Kp0c</a></footer>
 </main>
 <script>
 const $ = id => document.getElementById(id);
-const INPUT_IDS = ['div-to-ex-rate','buy-price-ex','sell-qty-pieces','sell-price-div','invest-div'];
+const INPUT_IDS = ['div-to-ex-rate','buy-price-ex','sell-qty-pieces','sell-price-div'];
 const STORAGE_KEY = 'poe2flip';
 
 function formatSigned(value, decimals = 1){
@@ -183,7 +216,10 @@ function recalculate(){
   const buyPriceEx = parseFloat($('buy-price-ex').value) || 0;
   const sellQtyPieces = parseFloat($('sell-qty-pieces').value) || 0;
   const sellPriceDiv = parseFloat($('sell-price-div').value) || 0;
-  if(!divToExRate || !buyPriceEx || !sellQtyPieces || !sellPriceDiv) return;
+  if(!divToExRate || !buyPriceEx || !sellQtyPieces || !sellPriceDiv){
+    showEmptyState();
+    return;
+  }
 
   const sellValueEx = sellPriceDiv / sellQtyPieces * divToExRate;
   $('sell-value-hint').textContent = '≈ ' + sellValueEx.toFixed(1) + ' ex/шт';
@@ -216,17 +252,86 @@ function recalculate(){
   $('loop-summary').textContent = 'вкладено ' + investedDiv + ' div → куплено ' + piecesBought + ' шт, продано ' + num(piecesSold);
   $('verdict-label').textContent = isProfitable ? 'Вигідно' : 'Збиток';
   $('verdict').className = 'verdict ' + (isProfitable ? 'good' : 'bad');
-
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(INPUT_IDS.map(id => $(id).value))); } catch(e){}
 }
 
-try {
-  const savedValues = JSON.parse(localStorage.getItem(STORAGE_KEY));
-  if(Array.isArray(savedValues)) INPUT_IDS.forEach((id, i) => { if(savedValues[i]) $(id).value = savedValues[i]; });
-} catch(e){}
+function showEmptyState(){
+  $('verdict-label').textContent = 'Введи курси';
+  $('verdict-margin').textContent = '';
+  $('profit-per-loop').textContent = '—';
+  $('net-div').textContent = '—';
+  $('net-currency').textContent = '—';
+  $('net-currency-hint').textContent = '';
+  $('net-ex').textContent = '—';
+  $('sell-value-hint').textContent = '';
+  $('loop-summary').textContent = '';
+  $('verdict').className = 'verdict good';
+}
 
-INPUT_IDS.forEach(id => $(id).addEventListener('input', recalculate));
+function saveState(){
+  const state = {};
+  INPUT_IDS.forEach(id => { state[id] = $(id).value; });
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e){}
+}
+
+function restoreState(){
+  let saved = null;
+  try { saved = JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch(e){}
+  if(!saved || typeof saved !== 'object') return;
+  INPUT_IDS.forEach(id => {
+    const value = Array.isArray(saved) ? null : saved[id];
+    if(value !== undefined && value !== null && value !== '') $(id).value = value;
+  });
+}
+
+INPUT_IDS.forEach(id => $(id).addEventListener('input', () => {
+  saveState();
+  recalculate();
+}));
+
+restoreState();
 recalculate();
+
+const INSTALL_DISMISSED_KEY = 'poe2flip-install-dismissed';
+const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+  || window.navigator.standalone === true;
+const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+let deferredInstallPrompt = null;
+
+function showInstallBanner(){
+  if(isStandalone) return;
+  try { if(localStorage.getItem(INSTALL_DISMISSED_KEY)) return; } catch(e){}
+  $('install-banner').classList.add('visible');
+}
+
+window.addEventListener('beforeinstallprompt', event => {
+  event.preventDefault();
+  deferredInstallPrompt = event;
+  showInstallBanner();
+});
+
+if(isIos && !isStandalone){
+  $('install-text').textContent = 'Встанови як застосунок: Поділитись → "На Початковий екран"';
+  $('install-btn').style.display = 'none';
+  showInstallBanner();
+}
+
+$('install-btn').addEventListener('click', async () => {
+  if(!deferredInstallPrompt) return;
+  deferredInstallPrompt.prompt();
+  await deferredInstallPrompt.userChoice;
+  deferredInstallPrompt = null;
+  $('install-banner').classList.remove('visible');
+});
+
+$('install-dismiss').addEventListener('click', () => {
+  $('install-banner').classList.remove('visible');
+  try { localStorage.setItem(INSTALL_DISMISSED_KEY, '1'); } catch(e){}
+});
+
+window.addEventListener('appinstalled', () => {
+  $('install-banner').classList.remove('visible');
+});
+
 if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 </script>
 </body>
